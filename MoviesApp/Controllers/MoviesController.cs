@@ -22,9 +22,29 @@ namespace MoviesApp.Controllers
 
         // GET: api/Movies
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
+        public async Task<ActionResult<IEnumerable<Movie>>> GetMovies(DateTimeOffset? from = null, DateTimeOffset? to = null)
         {
-            return await _context.Movies.ToListAsync();
+            IQueryable<Movie> result = _context.Movies;
+            if (from != null && to != null)
+            {
+                result = result.Where(m => from <= m.DateAdded && m.DateAdded <= to);
+            }
+            else if (from != null)
+            {
+                result = result.Where(m => from <= m.DateAdded);
+            }
+            else if (to != null)
+            {
+                result = result.Where(m => m.DateAdded <= to);
+            }
+
+            var resultList = await result
+                .OrderByDescending(x => x.YearOfRelease)
+                .ToListAsync();
+
+            //return await result.OrderByDescending(x => x.YearOfRelease).ToListAsync();
+
+            return resultList;
         }
 
         // GET: api/Movies/5
