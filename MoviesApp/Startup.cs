@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MoviesApp.Models;
 
 namespace MoviesApp
 {
@@ -25,6 +28,22 @@ namespace MoviesApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                options.JsonSerializerOptions.IgnoreNullValues = true;
+            });
+            services.AddDbContext<MoviesDbContext>(options =>
+            {
+                options.UseSqlServer(Configuration.GetConnectionString("MoviesDbConnectionString"));
+            });
+
+            /*
+            services.AddDbContext<TodoContext>(opt =>
+            {
+                opt.UseInMemoryDatabase("TodoList");
+            });
+            */
             services.AddControllers();
         }
 

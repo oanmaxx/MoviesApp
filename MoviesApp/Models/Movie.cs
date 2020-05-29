@@ -13,10 +13,10 @@ namespace MoviesApp.Models
         public string Description { get; set; }
         public MovieGenre Genre { get; set; }      
         public string Duration { get; set; }    // durata -> metoda de masurare?
-        public string YearOfRelease { get; set; }   // time format for year
+        public DateTime YearOfRelease { get; set; }   
         public string Director { get; set; }
         public DateTimeOffset DateAdded { get; set; }
-        public int Rating { get; set; }
+        public double Rating { get; set; }
         public bool Watched { get; set; }       //yes,no
     }
 }
