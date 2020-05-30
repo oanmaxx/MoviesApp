@@ -20,6 +20,8 @@ namespace MoviesApp.Models
         public string Director { get; set; }
         public DateTimeOffset DateAdded { get; set; }
         public double Rating { get; set; }
-        public bool Watched { get; set; }       //yes,no
+        public bool Watched { get; set; }   
+        
+        public List<Comment> Comments { get; set; }
     }
 }

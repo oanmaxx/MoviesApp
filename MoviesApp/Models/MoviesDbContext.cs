@@ -17,5 +17,6 @@ namespace MoviesApp.Models
 
         //reference - DB table / repository
         public DbSet<Movie> Movies { get; set; }
+        public DbSet<Comment> Comments { get; set; }
     }
 }

@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
+using MoviesApp.Migrations;
 using MoviesApp.Models;
 
 namespace MoviesApp.Controllers
@@ -21,28 +23,44 @@ namespace MoviesApp.Controllers
         }
 
         // GET: api/Movies
+        /// <summary>
+        /// Gets a list of all movies
+        /// </summary>
+        /// <param name="from">Filter movies added from this date(inclusive).</param>
+        /// <param name="to">Filter movies add up to this date time.</param>
+        /// <returns>A list of Movie objcts.</returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Movie>>> GetMovies(DateTimeOffset? from = null, DateTimeOffset? to = null)
         {
-            IQueryable<Movie> result = _context.Movies;
+            IQueryable<Movie> allMovies = _context.Movies;
+
             if (from != null && to != null)
             {
-                result = result.Where(m => from <= m.DateAdded && m.DateAdded <= to);
+                allMovies = allMovies.Where(m => from <= m.DateAdded && m.DateAdded <= to);
             }
             else if (from != null)
             {
-                result = result.Where(m => from <= m.DateAdded);
+                allMovies = allMovies.Where(m => from <= m.DateAdded);
             }
             else if (to != null)
             {
-                result = result.Where(m => m.DateAdded <= to);
+                allMovies = allMovies.Where(m => m.DateAdded <= to);
             }
 
-            var resultList = await result
+            var resultList = await allMovies
                 .OrderByDescending(x => x.YearOfRelease)
                 .ToListAsync();
 
-            //return await result.OrderByDescending(x => x.YearOfRelease).ToListAsync();
+            // merge all comments
+            IQueryable<Comment> comments = _context.Comments;
+            foreach (Movie m in resultList)
+            {
+                var allComments = comments.Where(a => a.Movie.Id == m.Id);
+                if (allComments.Any())
+                {
+                    m.Comments = new List<Comment>(allComments.ToList());
+                }
+            }
 
             return resultList;
         }
@@ -58,6 +76,12 @@ namespace MoviesApp.Controllers
                 return NotFound();
             }
 
+            var allComments = _context.Comments.Where(a => a.Movie.Id == movie.Id);
+            if (allComments.Any())
+            {
+                movie.Comments = new List<Comment>(allComments.ToList());
+            }
+
             return movie;
         }
 
@@ -70,6 +94,31 @@ namespace MoviesApp.Controllers
             if (id != movie.Id)
             {
                 return BadRequest();
+            }
+
+            if (movie.Comments != null) {
+                // update or delete existing comments
+                var existingComments = _context.Comments.Where(a => a.Movie.Id == movie.Id);
+                foreach (var c in existingComments)
+                {
+                    var newValue = movie.Comments.FirstOrDefault(a => a.Id == c.Id);
+                    if (newValue != null)
+                    {
+                        newValue.Movie = movie;
+                        _context.Entry(c).State = EntityState.Detached;
+                        _context.Entry(newValue).State = EntityState.Modified;
+                    }
+                    else
+                    {
+                        _context.Comments.Remove(c);
+                    }
+                }
+
+                // create new comments
+                foreach(var c in movie.Comments.Where(a=>a.Id == 0))
+                {
+                    _context.Comments.Add(c);
+                }
             }
 
             _context.Entry(movie).State = EntityState.Modified;
@@ -115,7 +164,15 @@ namespace MoviesApp.Controllers
                 return NotFound();
             }
 
+
+            var allComments = _context.Comments.Where(a => a.Movie.Id == movie.Id);
+            foreach(var c in allComments)
+            {
+                _context.Comments.Remove(c);
+            }
+
             _context.Movies.Remove(movie);
+
             await _context.SaveChangesAsync();
 
             return movie;

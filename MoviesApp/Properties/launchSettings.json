@@ -15,16 +15,22 @@
       "launchUrl": "api/movies",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "EndpointDefaults": {
+        "Protocols": "Http1"
       }
     },
     "MoviesApp": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "api/movies",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+      "applicationUrl": "https://localhost:5001;http://localhost:5000",
+      "EndpointDefaults": {
+        "Protocols": "Http1"
+      }
     }
   }
 }
